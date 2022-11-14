@@ -1,7 +1,5 @@
 #include <AccelStepper.h>
 #include <Servo.h>
-
-
  
 //User-defined values
 long receivedSteps = 0; //Number of steps
@@ -58,17 +56,26 @@ void setup(){
       delay(0.5);
     }
     stepper.disableOutputs(); //nastavi vse pine stepperja na LOW
+    while(digitalRead(button0)){ //čaka na gumb, za prvi štart
+      delay(1);
+      } 
 }
 //Ob koncu kalibracije je spodnji servo zaprt, zgornji odprt, miza pa na 0.
 void loop() {
     servozg.write(0); //zgornji servo je odprt
     delay(500);
     servozg.attach(5);
-    servozg.write(60); //zgornji servo prime lepilni trak
+    while(digitalRead(button0)){ //čaka na gumb, da matej nastima trak
+      delay(1);
+      }
+    servozg.write(94); //zgornji servo prime lepilni trak
     delay(500);
     servosp.write(0); //spodnji se odpre in spusti trak
     delay(500);
     servosp.detach();
+    while(digitalRead(button0)){ //čaka na gumb, da matej odmakne roko
+      delay(1);
+      } 
     stepper.enableOutputs();
     stepper.setAcceleration(2000);
     stepper.setMaxSpeed(5000);
@@ -77,6 +84,7 @@ void loop() {
       stepper.run();  
       }
     stepper.disableOutputs(); // ko miza pride na končno pozicijo, se izklopi
+    servozg.write(100);
     delay(1000);
     digitalWrite(relay, LOW); //Streha se dvigne
     servosp.attach(3);
@@ -90,7 +98,8 @@ void loop() {
     while(digitalRead(button0)){ //čaka na gumb, da se lepilni trak nalepi na cevak
       delay(1);
       }    
-    servozg.write(60); //ko je gumb pritisnjen se zgornji servo odpre
+    servozg.write(0); //ko je gumb pritisnjen se zgornji servo odpre
+    delay(1000);
     servozg.detach();
     delay(500);
     while(digitalRead(button0)){ //čaka na gumb, da se lepilni trak odlepi od servota
