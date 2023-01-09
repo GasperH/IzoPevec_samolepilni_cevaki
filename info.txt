@@ -2,8 +2,10 @@ Info o projektu:
 Začetek : 15.11.2022
 Konec : 
 Gašper ure :  November : 50
-              December : 
+              December : 50
+              Januar : 
 Matej ure :   November : 50
-              December  :
-Rezkar ure : 
-Naročen material : 
+              December  : 50
+              Januar : 
+Rezkar ure : 30,2
+Naročen material : rezkar 100 €
