@@ -7,5 +7,5 @@ Gašper ure :  November : 50
 Matej ure :   November : 50
               December  : 50
               Januar : 30
-Rezkar ure : 30,2
+Rezkar ure : 40,2 
 Naročen material : rezkar 100 €
