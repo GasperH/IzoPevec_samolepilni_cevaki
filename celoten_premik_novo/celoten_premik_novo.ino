@@ -2,7 +2,7 @@
 #include "Wire.h" //allows communication over i2c devices
 #include "LiquidCrystal_I2C.h" //allows interfacing with LCD screens
 
-int initialHoming = -1;
+long initialHoming = -1;
 bool newData, runallowed = false; // booleans for new data from serial, and runallowed flag
 AccelStepper stepper(1, 8, 9);// direction Digital 9 (CCW), pulses Digital 8 (CLK)
 LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
@@ -18,7 +18,7 @@ byte streha = 7;
 byte premicnoprijemalo = 5;
 byte staticnoprijemalo = 2;
 
-byte pressureInput = A0; //select the analog input pin for the pressure transducer
+char pressureInput = A0; //select the analog input pin for the pressure transducer
 const int pressureZero = 95; //analog reading of pressure transducer at 0bar
 const int pressureMax = 583; //analog reading of pressure transducer at 6bar
 
@@ -55,7 +55,7 @@ void loop() {
     preveriTlak();
     digitalWrite(premicnoprijemalo, LOW); //Premicno prijemalo odprto
     delay(500);
-    lcd.print("Število dobrih cevakov: " + st_obdelanih_cevakov);
+    lcd.print("Stevilo dobrih cevakov: " + String(st_obdelanih_cevakov));
     premor_do_zelenega_gumba();
     lcd.clear();
     lcd.print("Nastavi trak in pritisni gumb.");
@@ -111,9 +111,10 @@ void loop() {
     premor_do_zelenega_gumba();//caka na gumb, da se lepilni trak odlepi od prijemala
     lcd.clear();
     lcd.print("Dober cevak - zeleni gumb, slab cevak - koncni gumb");
-    int pogoj = 0;
-    while(pogoj == 0){
-      if(digitalRead(zeleni_gumb)){
+    delay(1000);
+    byte pogoj = 0;
+    while(!pogoj){
+      if(!digitalRead(zeleni_gumb)){
         st_obdelanih_cevakov = st_obdelanih_cevakov + 1;
         pogoj = 1;
       }
@@ -154,7 +155,9 @@ void kalibracija(){
       stepper.moveTo(initialHoming); //premakne se za initialHoming
       initialHoming--; //initialHoming zmanjsa za 1
       stepper.run(); //dejanski premik 
-      delay(0.5);}
+      delay(0.5);
+      preveriTlak();
+      }
   stepper.setCurrentPosition(-100); //koncno stikalo je pri -100
   while (stepper.currentPosition() != 0){ //premakne mizo na 0
     stepper.moveTo(0);
