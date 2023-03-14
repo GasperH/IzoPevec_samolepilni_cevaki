@@ -22,6 +22,8 @@ char pressureInput = A0; //select the analog input pin for the pressure transduc
 const int pressureZero = 95; //analog reading of pressure transducer at 0bar
 const int pressureMax = 583; //analog reading of pressure transducer at 6bar
 
+const float pretvorba_poti = 8.49;
+
 float tlak = 0; //zacetna vrednost tlaka
 float tlak_v_barih = 0; 
  
@@ -30,7 +32,7 @@ void setup(){
     lcd.init();                      // initialize the lcd 
     lcd.backlight();
     pinMode(zeleni_gumb, INPUT_PULLUP); //stikalo za ukaz, nesklenjeno vraca 1
-    pinMode(kon_gumb, INPUT_PULLUP); //koncno stikalo pri lepilnih trakovih, nesklenjeno vraca 1
+    pinMode(kon_gumb, INPUT_PULLUP); //koncno stikalo pri lepilnih trakovih, nesklenjeno vraca 0
     pinMode(streha, OUTPUT);
     pinMode(premicnoprijemalo , OUTPUT);
     pinMode(staticnoprijemalo , OUTPUT);
@@ -74,8 +76,9 @@ void loop() {
     stepper.setAcceleration(2000);
     stepper.setMaxSpeed(2000);
     preveriTlak();
-    while (stepper.currentPosition() != 18200){ //miza se premakne z lepilnim trakom na drugo stran
-      stepper.moveTo(18200); 
+    long pot = 2055*pretvorba_poti;
+    stepper.moveTo(pot);
+    while (stepper.currentPosition() != pot){ //miza se premakne z lepilnim trakom na drugo stran
       stepper.run(); 
       preveriTlak(); 
       }
@@ -84,9 +87,11 @@ void loop() {
     delay(1500);
     stepper.setAcceleration(300);
     stepper.setMaxSpeed(300);
-    while (stepper.currentPosition() != 18350){ //nateg lepila
-      stepper.moveTo(18350); 
-      stepper.run();  
+    pot = 2060*pretvorba_poti;
+    stepper.moveTo(pot);
+    while (stepper.currentPosition() != pot){ //nateg lepila na 2177mm
+      stepper.run();
+      preveriTlak(); 
       }
     stepper.disableOutputs(); // ko miza pride na koncno pozicijo, se izklopi
     lcd.print("ce je trak lepo potegnjen, pritisni gumb.");
@@ -126,8 +131,8 @@ void loop() {
     stepper.enableOutputs(); //Stepper se prizge
     stepper.setAcceleration(2000);
     stepper.setMaxSpeed(5000);
+    stepper.moveTo(0);
     while (stepper.currentPosition() != 0){ //miza se premakne nazaj na zacetek
-      stepper.moveTo(0); 
       stepper.run();
       preveriTlak();  
       }
@@ -135,17 +140,17 @@ void loop() {
 }
 
 void preveriTlak(){
-  tlak = analogRead(pressureInput); //reads value from input pin and assigns to variable
-  tlak_v_barih = (tlak - pressureZero)*6/(pressureMax - pressureZero); //conversion equation
-  if (tlak_v_barih < 4){
-    lcd.print("Prenizek zracni tlak");
-    while (tlak_v_barih < 4){
-      delay(250);
-      tlak = analogRead(pressureInput); //reads value from input pin and assigns to variable
-      tlak_v_barih = (tlak - pressureZero)*6/(pressureMax - pressureZero); //conversion equation
-    }
-    lcd.clear();
-  }
+  // tlak = analogRead(pressureInput); //reads value from input pin and assigns to variable
+  // tlak_v_barih = (tlak - pressureZero)*6/(pressureMax - pressureZero); //conversion equation
+  // if (tlak_v_barih < 4){
+  //   lcd.print("Prenizek zracni tlak");
+  //   while (tlak_v_barih < 4){
+  //     delay(250);
+  //     tlak = analogRead(pressureInput); //reads value from input pin and assigns to variable
+  //     tlak_v_barih = (tlak - pressureZero)*6/(pressureMax - pressureZero); //conversion equation
+  //   }
+  //   lcd.clear();
+  // }
 }
 
 void kalibracija(){
@@ -155,14 +160,12 @@ void kalibracija(){
       stepper.moveTo(initialHoming); //premakne se za initialHoming
       initialHoming--; //initialHoming zmanjsa za 1
       stepper.run(); //dejanski premik 
-      delay(0.5);
       preveriTlak();
       }
-  stepper.setCurrentPosition(-100); //koncno stikalo je pri -100
+  stepper.setCurrentPosition(-350); //koncno stikalo je pri -100
+  stepper.moveTo(0);
   while (stepper.currentPosition() != 0){ //premakne mizo na 0
-    stepper.moveTo(0);
     stepper.run();
-    delay(0.5);
   }
   stepper.disableOutputs(); //nastavi vse pine stepperja na LOW  
 }
