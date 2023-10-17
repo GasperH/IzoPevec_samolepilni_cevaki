@@ -76,7 +76,7 @@ void loop() {
     stepper.setAcceleration(1000);
     stepper.setMaxSpeed(2000);
     preveriTlak();
-    long pot = 2120*pretvorba_poti;
+    long pot = 2115*pretvorba_poti;
     stepper.moveTo(pot);
     while (stepper.currentPosition() != pot){ //miza se premakne z lepilnim trakom na drugo stran
       stepper.run(); 
@@ -166,7 +166,7 @@ void kalibracija(){
         cas = cas + 1;       
       }
       }
-  stepper.setCurrentPosition(-50); //koncno stikalo je pri -100
+  stepper.setCurrentPosition(-100); //koncno stikalo je pri -100
   stepper.moveTo(0);
   while (stepper.currentPosition() != 0){ //premakne mizo na 0
     stepper.run();
