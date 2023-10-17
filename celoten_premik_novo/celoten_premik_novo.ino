@@ -4,21 +4,21 @@
 
 long initialHoming = -1;
 bool newData, runallowed = false; // booleans for new data from serial, and runallowed flag
-AccelStepper stepper(1, 8, 9);// direction Digital 9 (CCW), pulses Digital 8 (CLK)
+AccelStepper stepper(1, 13, 11);// direction Digital 9 (CCW), pulses Digital 8 (CLK)
 LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 long st_obdelanih_cevakov = 0;
 
-byte zeleni_gumb = 11; //zeleni gumb
+byte zeleni_gumb = A1; //zeleni gumb SW1
 bool buttonState0 = 0;
 
-byte kon_gumb = 12; //koncno stikalo
+byte kon_gumb = A0; //koncno stikalo SW2
 bool buttonState1 = 0;
 
-byte streha = 7;
-byte premicnoprijemalo = 5;
-byte staticnoprijemalo = 2;
+byte streha = 8;
+byte premicnoprijemalo = 7;
+byte staticnoprijemalo = 9;
 
-char pressureInput = A0; //select the analog input pin for the pressure transducer
+char pressureInput = A3; //select the analog input pin for the pressure transducer
 const int pressureZero = 95; //analog reading of pressure transducer at 0bar
 const int pressureMax = 583; //analog reading of pressure transducer at 6bar
 
@@ -31,14 +31,14 @@ void setup(){
 
     lcd.init();                      // initialize the lcd 
     lcd.backlight();
-    pinMode(zeleni_gumb, INPUT_PULLUP); //stikalo za ukaz, nesklenjeno vraca 1
-    pinMode(kon_gumb, INPUT_PULLUP); //koncno stikalo pri lepilnih trakovih, nesklenjeno vraca 0
+    pinMode(zeleni_gumb, INPUT); //stikalo za ukaz, nesklenjeno vraca 0
+    pinMode(kon_gumb, INPUT); //koncno stikalo pri lepilnih trakovih, nesklenjeno vraca 0
     pinMode(streha, OUTPUT);
     pinMode(premicnoprijemalo , OUTPUT);
     pinMode(staticnoprijemalo , OUTPUT);
     Serial.begin(9600); //define baud rate
     preveriTlak();
-    digitalWrite(streha, HIGH); //Streha se spusti, ce je slucajno zgoraj
+    digitalWrite(streha, LOW); //Streha se spusti, ce je slucajno zgoraj
     preveriTlak();
     digitalWrite(staticnoprijemalo, LOW); //Zacetno prijemalo zaprto
     delay(1000);
@@ -73,10 +73,10 @@ void loop() {
     premor_do_zelenega_gumba();//caka na gumb, da matej odmakne roko
     lcd.clear(); 
     stepper.enableOutputs();
-    stepper.setAcceleration(2000);
+    stepper.setAcceleration(1000);
     stepper.setMaxSpeed(2000);
     preveriTlak();
-    long pot = 2055*pretvorba_poti;
+    long pot = 2120*pretvorba_poti;
     stepper.moveTo(pot);
     while (stepper.currentPosition() != pot){ //miza se premakne z lepilnim trakom na drugo stran
       stepper.run(); 
@@ -87,9 +87,9 @@ void loop() {
     delay(1500);
     stepper.setAcceleration(300);
     stepper.setMaxSpeed(300);
-    pot = 2060*pretvorba_poti;
-    stepper.moveTo(pot);
-    while (stepper.currentPosition() != pot){ //nateg lepila na 2177mm
+    long pot1 = pot + 8*pretvorba_poti;
+    stepper.moveTo(pot1);
+    while (stepper.currentPosition() != pot1){ //nateg lepila na 2160mm
       stepper.run();
       preveriTlak(); 
       }
@@ -98,13 +98,13 @@ void loop() {
     premor_do_zelenega_gumba();//caka na gumb, da pregledas ce se je kul potegnl
     lcd.clear();
     preveriTlak();
-    digitalWrite(streha, LOW); //Streha se dvigne
+    digitalWrite(streha, HIGH); //Streha se dvigne
     delay(500);
     lcd.print("Namest cevak in pritisni gumb.");
     premor_do_zelenega_gumba();//caka na gumb, da se cevak namesti
     lcd.clear();
     preveriTlak();
-    digitalWrite(streha, HIGH); //Streha se spusti
+    digitalWrite(streha, LOW); //Streha se spusti
     delay(500);
     lcd.print("Stisni cevak, da se lepilni trak prilepi nanj.");
     premor_do_zelenega_gumba();//caka na gumb, da se lepilni trak nalepi na cevak
@@ -119,11 +119,11 @@ void loop() {
     delay(1000);
     byte pogoj = 0;
     while(!pogoj){
-      if(!digitalRead(zeleni_gumb)){
+      if(digitalRead(zeleni_gumb)){
         st_obdelanih_cevakov = st_obdelanih_cevakov + 1;
         pogoj = 1;
       }
-      if(digitalRead(kon_gumb)){
+      if(!digitalRead(kon_gumb)){
         pogoj = 1;        
       }
     }  
@@ -140,29 +140,33 @@ void loop() {
 }
 
 void preveriTlak(){
-  // tlak = analogRead(pressureInput); //reads value from input pin and assigns to variable
-  // tlak_v_barih = (tlak - pressureZero)*6/(pressureMax - pressureZero); //conversion equation
-  // if (tlak_v_barih < 4){
-  //   lcd.print("Prenizek zracni tlak");
-  //   while (tlak_v_barih < 4){
-  //     delay(250);
-  //     tlak = analogRead(pressureInput); //reads value from input pin and assigns to variable
-  //     tlak_v_barih = (tlak - pressureZero)*6/(pressureMax - pressureZero); //conversion equation
-  //   }
-  //   lcd.clear();
-  // }
+  tlak = analogRead(pressureInput); //reads value from input pin and assigns to variable
+  tlak_v_barih = (tlak - pressureZero)*6/(pressureMax - pressureZero); //conversion equation
+  if (tlak_v_barih < 0.5){
+    lcd.print("Prenizek zracni tlak");
+    while (tlak_v_barih < 0.5){
+      delay(250);
+      tlak = analogRead(pressureInput); //reads value from input pin and assigns to variable
+      tlak_v_barih = (tlak - pressureZero)*6/(pressureMax - pressureZero); //conversion equation
+    }
+    lcd.clear();
+  }
 }
 
 void kalibracija(){
   stepper.setMaxSpeed(1000); //SPEED = Steps / second
   stepper.setAcceleration(800); //ACCELERATION = Steps /(second)^2
-  while (!digitalRead(kon_gumb)){ //pomicna miza se premakne do lepilnih trakov
+  float cas = 0;
+  while (cas < 1){ //pomicna miza se premakne do lepilnih trakov
       stepper.moveTo(initialHoming); //premakne se za initialHoming
       initialHoming--; //initialHoming zmanjsa za 1
       stepper.run(); //dejanski premik 
       preveriTlak();
+      if (digitalRead(kon_gumb) == 0){
+        cas = cas + 1;       
       }
-  stepper.setCurrentPosition(-350); //koncno stikalo je pri -100
+      }
+  stepper.setCurrentPosition(-50); //koncno stikalo je pri -100
   stepper.moveTo(0);
   while (stepper.currentPosition() != 0){ //premakne mizo na 0
     stepper.run();
@@ -171,7 +175,7 @@ void kalibracija(){
 }
 
 void premor_do_zelenega_gumba(){
-  while(digitalRead(zeleni_gumb)){
+  while(!digitalRead(zeleni_gumb)){
     delay(1);
   }
 }
